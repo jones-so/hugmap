@@ -1,0 +1,1769 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "巨图引擎招投标 API",
+    "version": "1.0.0",
+    "description": "Skill 与 API 共用接口和 X-API-Key。免 Key 按公网 IP、带 Key 按账号，各自每天 100 次，北京时间零点重置。网站会话不占用外部额度。成功业务请求扣次，失败不扣。个人关注必须带 Key。"
+  },
+  "servers": [
+    {
+      "url": "https://www.hugmap.com"
+    }
+  ],
+  "paths": {
+    "/api/v1/opportunities": {
+      "get": {
+        "operationId": "get_opportunities",
+        "summary": "检索公告",
+        "description": "沿用网站统一字典和筛选逻辑。仅返回已授权且可公开的真实公告，列表不包含正文；正文和附件通过详情接口读取。每页是一次业务调用。",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "description": "关键词，搜索项目、采购人及需求",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "description": "省级地区编码或兼容中文名称；从字典 region 获取",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "采购品类编码；父品类包含全部下级，支持多品类公告匹配",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stage",
+            "in": "query",
+            "description": "招标阶段字典编码",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "procurementMethod",
+            "in": "query",
+            "description": "采购方式字典编码，独立于招标阶段",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "noticeType",
+            "in": "query",
+            "description": "兼容旧参数：阶段名称或采购方式；不建议与 stage 冲突使用",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenderType",
+            "in": "query",
+            "description": "招标类型字典编码",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buyerType",
+            "in": "query",
+            "description": "实际采购人单位类型字典编码",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "publishedRange",
+            "in": "query",
+            "description": "发布时间快捷选项，取自 publishedRange 字典；日期按北京时间计算",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "publishedFrom",
+            "in": "query",
+            "description": "起始发布日期，包含当天；YYYY-MM-DD",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "publishedTo",
+            "in": "query",
+            "description": "结束发布日期，包含当天；YYYY-MM-DD",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "deadlineRange",
+            "in": "query",
+            "description": "投标截止快捷选项，取自 deadlineRange 字典",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deadlineFrom",
+            "in": "query",
+            "description": "截止日期下界，包含当天；YYYY-MM-DD",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "deadlineTo",
+            "in": "query",
+            "description": "截止日期上界，包含当天；YYYY-MM-DD",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "deadlineMissing",
+            "in": "query",
+            "description": "是否仅查询未公布截止日期的公告",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "budgetRange",
+            "in": "query",
+            "description": "预算快捷选项，取自 budgetRange 字典",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "budgetMin",
+            "in": "query",
+            "description": "预算下界（人民币元），包含边界",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "budgetMax",
+            "in": "query",
+            "description": "预算上界（人民币元），不包含边界",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "上一页返回的 nextCursor；后续请求保持相同筛选和 limit，不自行构造",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "每页条数，默认 25，最多 100",
+            "schema": {
+              "type": "integer",
+              "default": 25,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "当日免费总额度",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "包含正在执行请求预占额度后的剩余次数",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "下一次北京时间零点的 Unix 秒时间戳",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "筛选、日期或游标无效，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Key 无效、已撤销，或个人关注未提供 Key，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目或附件不存在，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "当日额度用尽；匿名请传 Key，账号请等待北京时间零点重置；不自动重试",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "附件下载地址或源站暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/opportunities/{id}": {
+      "get": {
+        "operationId": "get_opportunities_id",
+        "summary": "读取完整详情",
+        "description": "免费额度内无需登录或 Key，返回已同步的完整正文、官方来源和附件。历史别名会解析到规范公告。源站无正文或仍在同步会通过 contentStatus 说明，不承诺不存在的正文。",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "项目 ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "当日免费总额度",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "包含正在执行请求预占额度后的剩余次数",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "下一次北京时间零点的 Unix 秒时间戳",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Opportunity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "筛选、日期或游标无效，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Key 无效、已撤销，或个人关注未提供 Key，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目或附件不存在，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "当日额度用尽；匿名请传 Key，账号请等待北京时间零点重置；不自动重试",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "附件下载地址或源站暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/opportunities/{id}/attachments/{attachmentId}/download": {
+      "get": {
+        "operationId": "get_opportunities_id_attachments_attachmentId_download",
+        "summary": "下载附件或获取下载地址",
+        "description": "直接下载推荐 redirect=true。OSS 签名链接短期有效，不持久缓存。源站要求验证时返回官方入口，需要用户完成源站验证；不绕过访问控制。跨域重定向不得携带 Key。",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "项目 ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "description": "附件 ID，取自详情 attachments",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "redirect",
+            "in": "query",
+            "description": "true：返回 302 或文件流；false：返回 JSON 下载地址。签发地址扣一次，后续访问该地址不重复扣次；proxy 模式返回五分钟有效的一次性站内交付地址，原样访问即可，不需要再传 Key。",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "当日免费总额度",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "包含正在执行请求预占额度后的剩余次数",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "下一次北京时间零点的 Unix 秒时间戳",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "downloadUrl": {
+                      "type": "string"
+                    },
+                    "requiresVerification": {
+                      "type": "boolean"
+                    },
+                    "downloadMethod": {
+                      "type": "string",
+                      "enum": [
+                        "official",
+                        "proxy"
+                      ]
+                    }
+                  }
+                }
+              },
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "跳转至 OSS 临时签名地址或官方附件地址，本请求扣 1 次",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "当日免费总额度",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "包含正在执行请求预占额度后的剩余次数",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "下一次北京时间零点的 Unix 秒时间戳",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "筛选、日期或游标无效，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Key 无效、已撤销，或个人关注未提供 Key，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目或附件不存在，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "当日额度用尽；匿名请传 Key，账号请等待北京时间零点重置；不自动重试",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "附件下载地址或源站暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dictionaries": {
+      "get": {
+        "operationId": "get_dictionaries",
+        "summary": "获取统一字典",
+        "description": "返回发布版本及地区、品类树、阶段、采购方式、招标类型、单位类型、发布时间、截止时间和预算选项。按版本缓存，避免每次检索都消耗额度。",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {}
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "当日免费总额度",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "包含正在执行请求预占额度后的剩余次数",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "下一次北京时间零点的 Unix 秒时间戳",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dictionaries"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "筛选、日期或游标无效，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Key 无效、已撤销，或个人关注未提供 Key，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目或附件不存在，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "当日额度用尽；匿名请传 Key，账号请等待北京时间零点重置；不自动重试",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "附件下载地址或源站暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "operationId": "get_metrics",
+        "summary": "查询统计指标",
+        "description": "与网站趋势及首页使用相同统计；仅返回汇总，不公开来源目录或运营配置。",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {}
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "当日免费总额度",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "包含正在执行请求预占额度后的剩余次数",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "下一次北京时间零点的 Unix 秒时间戳",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Metrics"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "筛选、日期或游标无效，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Key 无效、已撤销，或个人关注未提供 Key，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目或附件不存在，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "当日额度用尽；匿名请传 Key，账号请等待北京时间零点重置；不自动重试",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "附件下载地址或源站暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usage": {
+      "get": {
+        "operationId": "get_usage",
+        "summary": "查询当前身份额度",
+        "description": "不扣调用次数。无 Key 返回当前公网 IP 额度，有 Key 返回所属账号额度；无效 Key 返回 401。",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {}
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "当日免费总额度",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "包含正在执行请求预占额度后的剩余次数",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "下一次北京时间零点的 Unix 秒时间戳",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "筛选、日期或游标无效，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Key 无效、已撤销，或个人关注未提供 Key，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目或附件不存在，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "当日额度用尽；匿名请传 Key，账号请等待北京时间零点重置；不自动重试",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "附件下载地址或源站暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/watchlist": {
+      "get": {
+        "operationId": "get_watchlist",
+        "summary": "查询个人关注",
+        "description": "按添加时间倒序返回当前 Key 所属账号的关注项目摘要，与网站账号同步。",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "上一页返回的 nextCursor；后续请求保持相同筛选和 limit，不自行构造",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "每页条数，默认 25，最多 100",
+            "schema": {
+              "type": "integer",
+              "default": 25,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "当日免费总额度",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "包含正在执行请求预占额度后的剩余次数",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "下一次北京时间零点的 Unix 秒时间戳",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "筛选、日期或游标无效，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Key 无效、已撤销，或个人关注未提供 Key，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目或附件不存在，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "当日额度用尽；匿名请传 Key，账号请等待北京时间零点重置；不自动重试",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "附件下载地址或源站暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/watchlist/{id}": {
+      "put": {
+        "operationId": "put_watchlist_id",
+        "summary": "关注项目",
+        "description": "仅操作 Key 所属账号。操作幂等，成功请求每次计 1 次；添加前先解析公告别名，不重复创建关注。",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "项目 ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "当日免费总额度",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "包含正在执行请求预占额度后的剩余次数",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "下一次北京时间零点的 Unix 秒时间戳",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "saved"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "saved": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "筛选、日期或游标无效，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Key 无效、已撤销，或个人关注未提供 Key，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目或附件不存在，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "当日额度用尽；匿名请传 Key，账号请等待北京时间零点重置；不自动重试",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "附件下载地址或源站暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_watchlist_id",
+        "summary": "取消关注",
+        "description": "仅操作 Key 所属账号。操作幂等，成功请求每次计 1 次；添加前先解析公告别名，不重复创建关注。",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "项目 ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "当日免费总额度",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "包含正在执行请求预占额度后的剩余次数",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "下一次北京时间零点的 Unix 秒时间戳",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "saved"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "saved": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "筛选、日期或游标无效，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Key 无效、已撤销，或个人关注未提供 Key，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目或附件不存在，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "当日额度用尽；匿名请传 Key，账号请等待北京时间零点重置；不自动重试",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "附件下载地址或源站暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用，不扣次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/attachment-deliveries/{ticket}": {
+      "get": {
+        "operationId": "consume_attachment_delivery",
+        "summary": "使用一次性附件交付凭据",
+        "description": "仅用于 download?redirect=false 返回的 proxy 地址。获取该地址时已扣次，此请求不再扣次；凭据五分钟过期且只能使用一次。不要自行构造。",
+        "security": [],
+        "parameters": [
+          {
+            "name": "ticket",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "下载接口返回地址中的一次性凭据"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "附件文件流",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "官方或 OSS 下载跳转"
+          },
+          "410": {
+            "description": "凭据过期或已使用"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    },
+    "schemas": {
+      "Opportunity": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "attachments"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "规范公告 ID"
+          },
+          "title": {
+            "type": "string",
+            "description": "公告标题"
+          },
+          "buyer": {
+            "type": "string",
+            "description": "实际采购人"
+          },
+          "region": {
+            "type": "string",
+            "description": "地区名称"
+          },
+          "category": {
+            "type": "string",
+            "description": "主品类名称"
+          },
+          "noticeType": {
+            "type": "string",
+            "description": "招标阶段名称"
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "项目摘要"
+          },
+          "requirements": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "采购需求"
+          },
+          "sourceName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "官方来源名称"
+          },
+          "sourceUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "官方公告地址"
+          },
+          "sourceContentHtml": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "已清理的官方 HTML 正文；为空时可读取 sourceContentText"
+          },
+          "sourceContentText": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "正文纯文本"
+          },
+          "contentStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "正文同步状态，如已同步、源站无正文或待同步；以实际返回为准"
+          },
+          "stageCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "标准阶段编码"
+          },
+          "procurementMethodCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "标准采购方式编码"
+          },
+          "procurementMethod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "采购方式名称"
+          },
+          "buyerTypeCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "标准单位类型编码"
+          },
+          "buyerType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "单位类型名称"
+          },
+          "regionCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "标准省级地区编码"
+          },
+          "publishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 8601 时间，可能为空",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 8601 时间，可能为空",
+            "format": "date-time"
+          },
+          "contentFetchedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 8601 时间，可能为空",
+            "format": "date-time"
+          },
+          "classificationUpdatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 8601 时间，可能为空",
+            "format": "date-time"
+          },
+          "budget": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "人民币元；null 表示未提供，不是零"
+          },
+          "deadline": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "投标截止日期；未提供时为空",
+            "format": "date"
+          },
+          "confidence": {
+            "type": "number",
+            "description": "数据置信度"
+          },
+          "sampleData": {
+            "type": "boolean",
+            "description": "是否为样例数据"
+          },
+          "classificationVersion": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Label"
+            },
+            "description": "多个采购品类"
+          },
+          "tenderTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Label"
+            },
+            "description": "多个招标类型"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            }
+          }
+        }
+      },
+      "Label": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "Attachment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "description": "官方附件地址"
+          },
+          "downloadUrl": {
+            "type": "string",
+            "description": "站内交付地址；可能是兼容路径，Key 及额度规则相同"
+          },
+          "contentType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "媒体类型"
+          },
+          "position": {
+            "type": "integer"
+          },
+          "archiveStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "归档状态，不影响可用官方附件交付"
+          },
+          "archivedSize": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "SearchResult": {
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor",
+          "total",
+          "sampleData"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Opportunity"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total": {
+            "type": "integer"
+          },
+          "sampleData": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      },
+      "Usage": {
+        "type": "object",
+        "properties": {
+          "used": {
+            "type": "integer"
+          },
+          "quota": {
+            "type": "integer"
+          },
+          "remaining": {
+            "type": "integer"
+          },
+          "period": {
+            "type": "string"
+          },
+          "resetAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Dictionaries": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "catalogSource": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DictionaryEntry"
+            }
+          }
+        }
+      },
+      "DictionaryEntry": {
+        "type": "object",
+        "properties": {
+          "dimension": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sort": {
+            "type": "integer"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "mergedInto": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "values": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Metrics": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "integer"
+          },
+          "highConfidenceRecords": {
+            "type": "integer"
+          },
+          "sources": {
+            "type": "integer"
+          },
+          "sampleData": {
+            "type": "boolean"
+          },
+          "coverage": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "collectionMode": {
+            "type": "string"
+          },
+          "categoryCounts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "regionCounts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
